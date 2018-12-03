@@ -33,6 +33,8 @@ export default class LineupService {
         this.averagePlayersLineup();
     }
 
+    // TODO:  Top 2 players then the rest average salary
+
     public averagePlayersLineup() {
         let lineup = new Lineup();
         let numberOfPositions = Object.keys(lineup).length;

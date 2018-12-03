@@ -1,3 +1,3 @@
-import LineupService from './service/lineup.service';
-let lineupService = new LineupService();
+import DraftkingsLineupService from './service/draftkings/lineup.service';
+let lineupService = new DraftkingsLineupService();
 lineupService.run();
