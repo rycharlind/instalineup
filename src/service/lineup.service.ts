@@ -41,6 +41,7 @@ export default class LineupService {
             lineup[key] = this.selectPlayer(key, averageSalary);
         }
         console.log(lineup);
+        console.log('Total Average PPG: ' + lineup.totalAvgPPG());
     }
 
     public selectPlayer(_position: string, _salary: number): Player {
@@ -109,6 +110,5 @@ export default class LineupService {
             player.avgPPG = parseInt(player.avgPPG);
         }
     }
-
 
 }

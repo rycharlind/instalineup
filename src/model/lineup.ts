@@ -9,4 +9,15 @@ export class Lineup {
     G: Player = new Player();
     F: Player = new Player();
     UTIL: Player = new Player();
+
+    constructor() {}
+
+    public totalAvgPPG(): number {
+        let total = 0;
+        for (let key of Object.keys(this)) {
+            let player: Player = this[key];
+            total += player.avgPPG;
+        }
+        return total;
+    }
 }
