@@ -50,9 +50,9 @@ export default class LineupService {
         console.log(lineup);
     }
 
-    public selectPlayer(position: string, salary: number): Player {
+    public selectPlayer(_position: string, _salary: number): Player {
         let player: Player;
-        let playerSet = this.getPlayerSetByPosition(position);
+        let playerSet = this.getPlayerSetByPosition(_position);
         playerSet.sort(this.compareAvePPG);
         player = playerSet[0];
         this.removePlayerFromAllPlayerSets(player);
@@ -60,9 +60,9 @@ export default class LineupService {
     }
 
 
-    public getPlayerSetByPosition(position: string): Player[] {
+    public getPlayerSetByPosition(_position: string): Player[] {
         let playerSet: Player[] = [];
-        switch (position) {
+        switch (_position) {
             case 'PG':
                 this.addPlayersToPlayerSet('PG', playerSet);
                 this.addPlayersToPlayerSet('SG', playerSet);
@@ -111,24 +111,24 @@ export default class LineupService {
         }
     }
 
-    public removePlayerFromPlayerSet(player: Player, playerSet: Player[]) {
-        for (let i = 0; i < playerSet.length; i++) {
-            let playerCompare = playerSet[i];
-            if (player.id === playerCompare.id) {
-                playerSet.splice(i, 1);
+    public removePlayerFromPlayerSet(_player: Player, _playerSet: Player[]) {
+        for (let i = 0; i < _playerSet.length; i++) {
+            let playerCompare = _playerSet[i];
+            if (_player.id === playerCompare.id) {
+                _playerSet.splice(i, 1);
             }
         }
     }
 
-    public removePlayerFromAllPlayerSets(player: Player) {
+    public removePlayerFromAllPlayerSets(_player: Player) {
         for (let key in this.playerSetPositions) {
             let playerSet: Player[] = this.playerSetPositions[key];
-            this.removePlayerFromPlayerSet(player, playerSet);
+            this.removePlayerFromPlayerSet(_player, playerSet);
         }
     }
 
-    public createPlayerSetPositions(playerSet: Player[]) {
-        for (let player of playerSet) {
+    public createPlayerSetPositions(_playerSet: Player[]) {
+        for (let player of _playerSet) {
             let positions = player.rosterPosition.split("/");
             for (let position of positions) {
                 if (this.playerSetPositions[position]) {
