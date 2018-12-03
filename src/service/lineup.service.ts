@@ -37,78 +37,23 @@ export default class LineupService {
         let lineup = new Lineup();
         let numberOfPositions = Object.keys(lineup).length;
         let averageSalary = this.salaryCap / numberOfPositions;
-
-        lineup.PG = this.selectPlayer('PG', averageSalary);
-        lineup.SG = this.selectPlayer('SG', averageSalary);
-        lineup.SF = this.selectPlayer('SF', averageSalary);
-        lineup.PF = this.selectPlayer('PF', averageSalary);
-        lineup.C = this.selectPlayer('C', averageSalary);
-        lineup.G = this.selectPlayer('G', averageSalary);
-        lineup.F = this.selectPlayer('F', averageSalary);
-        lineup.UTIL = this.selectPlayer('UTIL', averageSalary);
-
+        for (let key of Object.keys(lineup)) {
+            lineup[key] = this.selectPlayer(key, averageSalary);
+        }
         console.log(lineup);
     }
 
     public selectPlayer(_position: string, _salary: number): Player {
         let player: Player;
-        let playerSet = this.getPlayerSetByPosition(_position);
+        let playerSet = this.playerSetPositions[_position];
         playerSet.sort(this.compareAvePPG);
-        player = playerSet[0];
+        for (let playerCompare of playerSet) {
+            if (playerCompare.salary < _salary) {
+                player = playerCompare;
+            }
+        }
         this.removePlayerFromAllPlayerSets(player);
         return player;
-    }
-
-
-    public getPlayerSetByPosition(_position: string): Player[] {
-        let playerSet: Player[] = [];
-        switch (_position) {
-            case 'PG':
-                this.addPlayersToPlayerSet('PG', playerSet);
-                this.addPlayersToPlayerSet('SG', playerSet);
-                break;
-            case 'SG':
-                this.addPlayersToPlayerSet('PG', playerSet);
-                this.addPlayersToPlayerSet('SG', playerSet);
-                this.addPlayersToPlayerSet('SF', playerSet);
-                break;
-            case 'SF':
-                this.addPlayersToPlayerSet('SG', playerSet);
-                this.addPlayersToPlayerSet('SF', playerSet);
-                this.addPlayersToPlayerSet('PF', playerSet);
-                break;
-            case 'PF':
-                this.addPlayersToPlayerSet('SF', playerSet);
-                this.addPlayersToPlayerSet('PF', playerSet);
-                this.addPlayersToPlayerSet('C', playerSet);
-                break;
-            case 'C':
-                this.addPlayersToPlayerSet('C', playerSet);
-                this.addPlayersToPlayerSet('PF', playerSet);
-                break;
-            case 'G':
-                this.addPlayersToPlayerSet('PG', playerSet);
-                this.addPlayersToPlayerSet('SG', playerSet);
-                this.addPlayersToPlayerSet('SF', playerSet);
-                break;
-            case 'F':
-                this.addPlayersToPlayerSet('SF', playerSet);
-                this.addPlayersToPlayerSet('PF', playerSet);
-                this.addPlayersToPlayerSet('C', playerSet);
-                break;
-            case 'UTIL':
-                this.addPlayersToPlayerSet('SG', playerSet);
-                this.addPlayersToPlayerSet('SF', playerSet);
-                this.addPlayersToPlayerSet('PF', playerSet);
-                break;
-        }
-        return playerSet;
-    }
-
-    public addPlayersToPlayerSet(_position: string, _playerSet: Player[]) {
-        for (let player of this.playerSetPositions[_position]) {
-            _playerSet.push(player);
-        }
     }
 
     public removePlayerFromPlayerSet(_player: Player, _playerSet: Player[]) {
@@ -151,9 +96,9 @@ export default class LineupService {
 
     public compareAvePPG(a: Player, b: Player) {
         if (a.avgPPG > b.avgPPG) {
-            return -1;
-        } else if (a.avgPPG < b.avgPPG) {
             return 1;
+        } else if (a.avgPPG < b.avgPPG) {
+            return -1;
         }
     }
 
