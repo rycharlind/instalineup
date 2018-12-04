@@ -1,14 +1,27 @@
 import {Player} from "../../model/draftkings/player";
-import {Lineup} from "../../model/lineup";
+import {Lineup} from "../../model/draftkings/lineup";
 
 var csv = require("fast-csv");
 
 export default class DraftkingsLineupService {
 
-    public csvHeader = ["rank", "id", "name", "team", "position", "opponent", "opponentRank", "opponentPositionRank", "fantasyPoints", "fantasyPointsPerDollar", "operator", "salary"];
+    public csvHeader = ["rank", "id", "name", "team", "position", "opponent", "opponentRank", "opponentPositionRank", "projectedPoints", "fantasyPointsPerDollar", "operator", "salary"];
     public playerSet: Player[] = [];
     public playerSetPositions = {};
     public salaryCap = 50000;
+    public salaryRemaining;
+    public lineup: Lineup = new Lineup();
+
+    public positionMap = {
+        'PG': ['PG', 'SG'],
+        'SG': ['PG', 'SG', 'SF'],
+        'SF': ['SG', 'SF', 'PF'],
+        'PF': ['SF', 'PF', 'C'],
+        'C': ['PF', 'C'],
+        'G': ['PG', 'SG', 'SF'],
+        'F': ['SF', 'PF', 'C'],
+        'UTIL': ['PG', 'SG', 'SF', 'PF', 'C']
+    };
 
     public run() {
         this.loadCsv('csv/fantasy-data-12-03-2018.csv');
@@ -31,20 +44,82 @@ export default class DraftkingsLineupService {
     }
 
     public createLineups() {
-        this.averagePlayersLineup();
+        // this.averagePlayersLineup();
+        this.mostPointsUnderCapLineup();
     }
 
-    // TODO:  Top 2 players then the rest average salary
+    //      Target Points:  287
+    // -    Add top 2 (n) players in different positions
+    // -    Fill the rest of the positions with players who's salaries are
+    //      under the remaining average per player with the most projected points
+    public mostPointsUnderCapLineup() {
+
+        this.salaryRemaining = this.salaryCap;
+
+        for (let position of Object.keys(this.lineup)) {
+            for (let player of this.playerSet) {
+                if (this.positionMap[position].includes(player.position)) {
+                    if (player.salary < this.salaryRemaining) {
+                        if (!this.isPlayerInLineup(player)) {
+                            this.addPlayerToLineupByPosition(player, position);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        console.log(this.lineup);
+        console.log('Total Projected Points: ' + this.lineup.totalProjectedPoints());
+    }
+
+    public addPlayerToLineupByPosition(player: Player, position: string) {
+        if (this.lineup[position].id) {
+            let comparePlayer = this.lineup[position];
+            if (player.projectedPoints > comparePlayer.projectedPoints) {
+                this.lineup[position] = player;
+                this.salaryRemaining -= player.salary;
+            }
+        } else {
+            this.lineup[position] = player;
+            this.salaryRemaining -= player.salary;
+        }
+    }
+
+    public isPlayerInLineup(player: Player): boolean {
+        for (let position of Object.keys(this.lineup)) {
+            let comparePlayer = this.lineup[position];
+            if (comparePlayer.id == player.id) {
+                return true
+            }
+        }
+        return false;
+    }
+
+    public addPlayerToLineup(player: Player) {
+        let positions = this.positionMap[player.position];
+        for (let position of positions) {
+            if (this.lineup[position]) {
+                let comparePlayer = this.lineup[position];
+                if (player.projectedPoints > comparePlayer.projectedPoints) {
+                    this.lineup[position] = player;
+                    break;
+                }
+            } else {
+                this.lineup[position] = player;
+            }
+        }
+    }
 
     public averagePlayersLineup() {
         let lineup = new Lineup();
         let numberOfPositions = Object.keys(lineup).length;
         let averageSalary = this.salaryCap / numberOfPositions;
-        for (let key of Object.keys(lineup)) {
-            lineup[key] = this.selectPlayer(key, averageSalary);
+        for (let position of Object.keys(lineup)) {
+            lineup[position] = this.selectPlayer(position, averageSalary);
         }
         console.log(lineup);
-        console.log('Total Average PPG: ' + lineup.totalAvgPPG());
+        console.log('Total Fantasy Points: ' + lineup.totalProjectedPoints());
     }
 
     public selectPlayer(_position: string, _salary: number): Player {
@@ -103,11 +178,19 @@ export default class DraftkingsLineupService {
         }
     }
 
+    public compareProjectedPoints(a: Player, b: Player) {
+        if (a.fantasyPointsPerDollar > b.fantasyPointsPerDollar) {
+            return -1;
+        } else if (a.fantasyPointsPerDollar < b.fantasyPointsPerDollar) {
+            return 1;
+        }
+    }
+
     public convertStringsToNumbers(data: any[]) {
         for (let player of data) {
             player.id = parseInt(player.id);
             player.salary = parseInt(player.salary);
-            player.fantasyPoints = parseFloat(player.fantasyPoints);
+            player.projectedPoints = parseFloat(player.projectedPoints);
             player.fantasyPointsPerDollar = parseFloat(player.fantasyPointsPerDollar);
             player.rank = parseInt(player.rank);
             player.opponentPositionRank = parseInt(player.opponentPositionRank);
@@ -152,9 +235,11 @@ export default class DraftkingsLineupService {
                 this.addPlayersToPlayerSet('C', tmpPlayerSet);
                 break;
             case 'UTIL':
+                this.addPlayersToPlayerSet('PG', tmpPlayerSet);
                 this.addPlayersToPlayerSet('SG', tmpPlayerSet);
                 this.addPlayersToPlayerSet('SF', tmpPlayerSet);
                 this.addPlayersToPlayerSet('PF', tmpPlayerSet);
+                this.addPlayersToPlayerSet('C', tmpPlayerSet);
                 break;
         }
         return tmpPlayerSet;

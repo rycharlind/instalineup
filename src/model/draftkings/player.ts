@@ -1,6 +1,6 @@
 export class Player {
     id: number;
-    fantasyPoints: number;
+    projectedPoints: number;
     fantasyPointsPerDollar: number;
     name: string;
     operator: string;
