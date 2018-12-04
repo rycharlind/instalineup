@@ -73,6 +73,12 @@ export default class DraftkingsLineupService {
         console.log('Total Projected Points: ' + this.lineup.totalProjectedPoints());
     }
 
+    public addTopPlayers(numberOfPlayers: number) {
+        for (let i = 0; i < numberOfPlayers; i++) {
+
+        }
+    }
+
     public addPlayerToLineupByPosition(player: Player, position: string) {
         if (this.lineup[position].id) {
             let comparePlayer = this.lineup[position];
