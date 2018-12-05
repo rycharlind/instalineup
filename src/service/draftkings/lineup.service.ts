@@ -12,6 +12,7 @@ export default class DraftkingsLineupService {
     public salaryCap: number = 50000;
     public remainingSalary: number;
     public avgRemainingSalaryPerPlayer: number;
+    public numberOfStarPlayers = 1;
 
     public positionMap = {
         'PG': ['PG', 'SG'],
@@ -52,7 +53,7 @@ export default class DraftkingsLineupService {
     // Target Points:  287
     public mostPointsUnderCapLineup() {
         this.remainingSalary = this.salaryCap;
-        this.addTopPlayers(3);
+        this.addTopPlayers(this.numberOfStarPlayers);
         this.addRemainingAveragePlayers();
 
         console.log(this.lineup);
@@ -72,7 +73,9 @@ export default class DraftkingsLineupService {
                 numberOfPlayers++;
             }
         }
-        this.avgRemainingSalaryPerPlayer = this.remainingSalary / numberOfPlayers;
+        this.avgRemainingSalaryPerPlayer = this.remainingSalary / (8 - this.numberOfStarPlayers);
+        console.log('Number of Star Players: ' + this.numberOfStarPlayers);
+        console.log('Remaining Salary: ' + this.remainingSalary);
         console.log('Initial AvgRemSalary: ' + this.avgRemainingSalaryPerPlayer);
     }
 
