@@ -17,7 +17,9 @@ export class Lineup {
         let total = 0;
         for (let key of Object.keys(this)) {
             let player: Player = this[key];
-            total += player.projectedPoints;
+            if (player.id) {
+                total += player.projectedPoints;
+            }
         }
         return total;
     }
