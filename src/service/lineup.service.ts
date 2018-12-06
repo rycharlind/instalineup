@@ -1,116 +1,142 @@
 import {Player} from "../model/player";
 import {Lineup} from "../model/lineup";
-var csv = require("fast-csv");
+import firebase from "firebase";
+import "firebase/database";
 
 export default class LineupService {
 
-    public csvHeader = ["position", "nameId", "name", "id", "rosterPosition", "salary", "gameInfo", "team", "avgPPG"];
+    public lineup: Lineup = new Lineup();
     public playerSet: Player[] = [];
-    public playerSetPositions = {};
-    public salaryCap = 50000;
-    
-    public run() {
-        this.loadCsv('csv/dk-playerset-1.csv');
-    }
-    
-    public loadCsv(filePath: string) {
-        csv.fromPath(filePath, {headers: this.csvHeader, renameHeaders: true, objectMode: true})
-            .on("data", (player: Player) => {
-                this.playerSet.push(player);
-            })
-            .on("end", () => {
-                this.init();
-            });
-    }
+    public remainingSalary: number = 50000;
+    public avgRemainingSalaryPerPlayer: number;
+    public numberOfStarPlayers = 3;
+    public numberOfPositions = 8;
 
-    public init() {
-        this.convertStringsToNumbers(this.playerSet);
-        this.createPlayerSetPositions(this.playerSet);
-        this.createLineups();
-    }
+    public db: firebase.database.Database;
 
-    public createLineups() {
-        this.averagePlayersLineup();
+    public positionMap = {
+        'PG': ['PG', 'SG'],
+        'SG': ['PG', 'SG', 'SF'],
+        'SF': ['SG', 'SF', 'PF'],
+        'PF': ['SF', 'PF', 'C'],
+        'C': ['PF', 'C'],
+        'G': ['PG', 'SG', 'SF'],
+        'F': ['SF', 'PF', 'C'],
+        'UTIL': ['PG', 'SG', 'SF', 'PF', 'C']
+    };
+
+    public async run() {
+        await this.init();
+        this.createLineup();
     }
 
-    // TODO:  Top 2 players then the rest average salary
-
-    public averagePlayersLineup() {
-        let lineup = new Lineup();
-        let numberOfPositions = Object.keys(lineup).length;
-        let averageSalary = this.salaryCap / numberOfPositions;
-        for (let key of Object.keys(lineup)) {
-            lineup[key] = this.selectPlayer(key, averageSalary);
-        }
-        console.log(lineup);
-        console.log('Total Average PPG: ' + lineup.totalAvgPPG());
+    public initFirebase() {
+        const config = {
+            apiKey: "AIzaSyDYu_6TrEWdZuCZUWmB7KaI-6qdQa1dhFM",
+            authDomain: "instalineup-d7712.firebaseapp.com",
+            databaseURL: "https://instalineup-d7712.firebaseio.com",
+            projectId: "instalineup-d7712",
+            storageBucket: "instalineup-d7712.appspot.com",
+            messagingSenderId: "14475899232"
+        };
+        this.db = firebase.initializeApp(config).database();
     }
 
-    public selectPlayer(_position: string, _salary: number): Player {
-        let player: Player;
-        let playerSet = this.playerSetPositions[_position];
-        playerSet.sort(this.compareAvePPG);
-        for (let playerCompare of playerSet) {
-            if (playerCompare.salary < _salary) {
-                player = playerCompare;
+    public async init() {
+        this.initFirebase();
+        let playerSetRef = await this.db
+            .ref('playerSet')
+            .orderByChild('projectedPoints')
+            .once('value');
+        this.playerSet = playerSetRef.val();
+    }
+
+    public createLineup() {
+        this.addTopPlayers(this.numberOfStarPlayers);
+        this.addRemainingAveragePlayers();
+        console.log(this.lineup);
+        console.log('Total Projected Points: ' + this.lineup.totalProjectedPoints());
+        console.log('Remaining Salary: ' + this.remainingSalary);
+        console.log('Avg Remaining Salary Per Player: ' + this.avgRemainingSalaryPerPlayer);
+    }
+
+    public addTopPlayers(numberOfPlayers: number) {
+        let count = 0;
+        for (let key of Object.keys(this.playerSet)) {
+            if (count >= numberOfPlayers) {
+                break;
+            }
+            let player = this.playerSet[key];
+            if (!this.lineup[player.position].id) {
+                this.lineup[player.position] = player;
+                this.remainingSalary -= player.salary;
+                count++
             }
         }
-        this.removePlayerFromAllPlayerSets(player);
-        return player;
+        this.avgRemainingSalaryPerPlayer = this.remainingSalary / (this.numberOfPositions - this.numberOfStarPlayers);
+        console.log('Number of Star Players: ' + this.numberOfStarPlayers);
+        console.log('Remaining Salary after Stars: ' + this.remainingSalary);
+        console.log('Initial AvgRemSalary: ' + this.avgRemainingSalaryPerPlayer);
     }
 
-    public removePlayerFromPlayerSet(_player: Player, _playerSet: Player[]) {
-        for (let i = 0; i < _playerSet.length; i++) {
-            let playerCompare = _playerSet[i];
-            if (_player.id === playerCompare.id) {
-                _playerSet.splice(i, 1);
-            }
-        }
-    }
-
-    public removePlayerFromAllPlayerSets(_player: Player) {
-        for (let key in this.playerSetPositions) {
-            let playerSet: Player[] = this.playerSetPositions[key];
-            this.removePlayerFromPlayerSet(_player, playerSet);
-        }
-    }
-
-    public createPlayerSetPositions(_playerSet: Player[]) {
-        for (let player of _playerSet) {
-            let positions = player.rosterPosition.split("/");
-            for (let position of positions) {
-                if (this.playerSetPositions[position]) {
-                    this.playerSetPositions[position].push(player);
-                } else {
-                    this.playerSetPositions[position] = [];
-                    this.playerSetPositions[position].push(player);
+    public addRemainingAveragePlayers() {
+        for (let lineupPosition of Object.keys(this.lineup)) {
+            if (this.isPositionOpen(lineupPosition)) {
+                for (let key of Object.keys(this.playerSet)) {
+                    let player = this.playerSet[key];
+                    if (this.positionMap[lineupPosition].includes(player.position)) {
+                        this.addPlayerToLineupByPosition(player, lineupPosition);
+                    }
                 }
             }
         }
     }
 
-    public compareSalary(a: Player, b: Player) {
-        if (a.salary > b.salary) {
-            return -1;
-        } else if (a.salary < b.salary) {
-            return 1;
+    public addPlayerToLineupByPosition(newPlayer: Player, lineupPosition: string) {
+        if (!this.isPlayerInLineup(newPlayer)) {
+            if (newPlayer.salary < this.avgRemainingSalaryPerPlayer) {
+                if (this.lineup[lineupPosition].id) {
+                    let currentPlayer = this.lineup[lineupPosition];
+                    if (newPlayer.projectedPoints > currentPlayer.projectedPoints) {
+                        this.lineup[lineupPosition] = newPlayer;
+                        this.remainingSalary += currentPlayer.salary;
+                        this.remainingSalary -= newPlayer.salary;
+                        this.avgRemainingSalaryPerPlayer = this.remainingSalary / this.countOpenPositions();
+                    }
+                } else {
+                    this.lineup[lineupPosition] = newPlayer;
+                    this.remainingSalary -= newPlayer.salary;
+                    this.avgRemainingSalaryPerPlayer = this.remainingSalary / this.countOpenPositions();
+                }
+            }
         }
     }
 
-    public compareAvePPG(a: Player, b: Player) {
-        if (a.avgPPG > b.avgPPG) {
-            return 1;
-        } else if (a.avgPPG < b.avgPPG) {
-            return -1;
+    public countOpenPositions(): number {
+        let count = 0;
+        for (let position of Object.keys(this.lineup)) {
+            if (!this.lineup[position].id) {
+                count++;
+            }
         }
+        return count;
     }
 
-    public convertStringsToNumbers(data: any[]) {
-        for (let player of data) {
-            player.id = parseInt(player.id);
-            player.salary = parseInt(player.salary);
-            player.avgPPG = parseInt(player.avgPPG);
+    public isPositionOpen(position: string): boolean {
+        if (this.lineup[position].id) {
+            return false;
         }
+        return true;
+    }
+
+    public isPlayerInLineup(player: Player): boolean {
+        for (let position of Object.keys(this.lineup)) {
+            let comparePlayer = this.lineup[position];
+            if (comparePlayer.id == player.id) {
+                return true
+            }
+        }
+        return false;
     }
 
 }

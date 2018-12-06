@@ -1,11 +1,14 @@
 export class Player {
-    position: string;
-    nameId: string;
-    name: string;
     id: number;
-    rosterPosition: string;
-    salary: number;
-    gameInfo: string;
+    projectedPoints: number;
+    fantasyPointsPerDollar: number;
+    name: string;
+    operator: string;
+    opponent: string;
+    opponentPositionRank: number;
+    oponentRank: number;
     team: string;
-    avgPPG: number;
+    rank: number;
+    position: string;
+    salary: number;
 }

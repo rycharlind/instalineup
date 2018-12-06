@@ -10,13 +10,16 @@ export class Lineup {
     F: Player = new Player();
     UTIL: Player = new Player();
 
-    constructor() {}
+    constructor() {
+    }
 
-    public totalAvgPPG(): number {
+    public totalProjectedPoints(): number {
         let total = 0;
         for (let key of Object.keys(this)) {
             let player: Player = this[key];
-            total += player.avgPPG;
+            if (player.id) {
+                total += player.projectedPoints;
+            }
         }
         return total;
     }
