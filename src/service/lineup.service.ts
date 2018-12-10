@@ -51,6 +51,24 @@ export default class LineupService {
         this.playerSet = playerSetRef.val();
     }
 
+    //
+    public topMix(topNumber: number) {
+        let topPlayers = [];
+        for (let i = 0; i < topNumber; i++) {
+            topPlayers.push(this.getPlayerSetAtIndex(i));
+        }
+    }
+
+    public getPlayerSetAtIndex(index: number) {
+        let count = 0;
+        for (let player of this.playerSet) {
+            if (count == index) {
+                return player;
+            }
+            count++;
+        }
+    }
+
     public createLineup() {
         this.addTopPlayers(this.numberOfStarPlayers);
         this.addRemainingAveragePlayers();

@@ -1,8 +1,15 @@
 import LineupService from './service/lineup.service';
 import DataImportService from './service/data-import.service'
 
-// let dataImporter = new DataImportService();
-// dataImporter.loadCsv('csv/fantasy-data-12-05-18.csv');
+const myArgs = process.argv.slice(2);
+console.log(myArgs);
 
-let lineupService = new LineupService();
-lineupService.run();
+const command = myArgs[0];
+switch (command) {
+    case 'lineup':
+        new LineupService().run();
+        break;
+    case 'import':
+        let filePath = myArgs[1];
+        new DataImportService().loadCsv(filePath);
+}
