@@ -1,10 +1,10 @@
-import {Player} from "../../model/nfl/player.model";
-import {Lineup} from "../../model/nfl/lineup.model";
+import {Player} from "../../../model/nfl/player.model";
+import {Lineup} from "../../../model/nfl/lineup.model";
 import firebase from "firebase";
 import "firebase/database";
-import FirebaseService from "../../firebase/firebase.service";
+import FirebaseService from "../../../firebase/firebase.service";
 
-export default class LineupService {
+export default class LineupNflService {
 
     public lineup: Lineup = new Lineup();
     public playerSet: Player[] = [];

@@ -1,4 +1,4 @@
-import {Player} from "../model/player";
+import {Player} from "../model/nba/player";
 import firebase from "firebase";
 import "firebase/database";
 
