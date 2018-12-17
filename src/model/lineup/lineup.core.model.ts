@@ -1,15 +1,9 @@
-import {Player} from "./player.model";
+import {Player} from "../player.core.model";
 
 export class Lineup {
-    QB: Player = new Player();
-    RB1: Player = new Player();
-    RB2: Player = new Player();
-    WR1: Player = new Player();
-    WR2: Player = new Player();
-    WR3: Player = new Player();
-    TE: Player = new Player();
-    FLEX: Player = new Player();
-    DST: Player = new Player();
+
+    createAt: Date;
+    league: string;
 
     constructor() {
     }
