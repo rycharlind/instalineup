@@ -1,6 +1,5 @@
 import LineupNbaService from './service/lineup/nba/lineup.nba.service';
 import LineupNflService from './service/lineup/nfl/lineup.nfl.service';
-import DataImportService from './service/data-import/data-import.core.service';
 import DataImportNbaService from "./service/data-import/nba/data-import.nba.service";
 import DataImportNflService from "./service/data-import/nfl/data-import.nfl.service";
 

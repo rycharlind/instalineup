@@ -1,5 +1,6 @@
 import firebase from "firebase";
 import "firebase/database";
+import FirebaseService from "../../firebase/firebase.service";
 
 var csv = require("fast-csv");
 
@@ -9,7 +10,7 @@ export default class DataImportService {
     public db: firebase.database.Database;
 
     public async loadCsv(filePath: string) {
-        this.initFirebase();
+        this.db = new FirebaseService().db;
         await this.db.ref('/playerSet').remove();
         csv.fromPath(filePath, {headers: this.csvHeader, renameHeaders: true, objectMode: true})
             .on("data", async (player: any) => {
@@ -18,18 +19,6 @@ export default class DataImportService {
             .on("end", () => {
                 console.log('Player Set Loaded Successfully!')
             });
-    }
-
-    public initFirebase() {
-        const config = {
-            apiKey: "AIzaSyDYu_6TrEWdZuCZUWmB7KaI-6qdQa1dhFM",
-            authDomain: "instalineup-d7712.firebaseapp.com",
-            databaseURL: "https://instalineup-d7712.firebaseio.com",
-            projectId: "instalineup-d7712",
-            storageBucket: "instalineup-d7712.appspot.com",
-            messagingSenderId: "14475899232"
-        };
-        this.db = firebase.initializeApp(config).database();
     }
 
     public convertDataTypes(player: any): any {
