@@ -1,8 +1,8 @@
-import {Player} from "../model/player";
-import {Lineup} from "../model/lineup";
+import {Player} from "../../model/nfl/player.model";
+import {Lineup} from "../../model/nfl/lineup.model";
 import firebase from "firebase";
 import "firebase/database";
-import FirebaseService from "../firebase/firebase.service";
+import FirebaseService from "../../firebase/firebase.service";
 
 export default class LineupService {
 
@@ -10,20 +10,17 @@ export default class LineupService {
     public playerSet: Player[] = [];
     public remainingSalary: number = 50000;
     public avgRemainingSalaryPerPlayer: number;
-    public numberOfStarPlayers = 3;
-    public numberOfPositions = 8;
+    public numberOfStarPlayers = 2;
+    public numberOfPositions = 9;
 
     public db: firebase.database.Database;
 
     public positionMap = {
-        'PG': ['PG', 'SG'],
-        'SG': ['PG', 'SG', 'SF'],
-        'SF': ['SG', 'SF', 'PF'],
-        'PF': ['SF', 'PF', 'C'],
-        'C': ['PF', 'C'],
-        'G': ['PG', 'SG', 'SF'],
-        'F': ['SF', 'PF', 'C'],
-        'UTIL': ['PG', 'SG', 'SF', 'PF', 'C']
+        'QB': ['QB'],
+        'RB': ['RB1', 'RB2', 'FLEX'],
+        'WR': ['WR1', 'WR2', 'WR3', 'FLEX'],
+        'TE': ['TE', 'FLEX'],
+        'DST': ['DST']
     };
 
     public async run() {
@@ -74,10 +71,14 @@ export default class LineupService {
                 break;
             }
             let player = this.playerSet[key];
-            if (!this.lineup[player.position].id) {
-                this.lineup[player.position] = player;
-                this.remainingSalary -= player.salary;
-                count++
+            let lineupPositions = this.positionMap[player.position];
+            for (let lineupPosition of lineupPositions) {
+                if (!this.lineup[lineupPosition].id) {
+                    this.lineup[lineupPosition] = player;
+                    this.remainingSalary -= player.salary;
+                    count++;
+                    break;
+                }
             }
         }
         this.avgRemainingSalaryPerPlayer = this.remainingSalary / (this.numberOfPositions - this.numberOfStarPlayers);
@@ -91,7 +92,7 @@ export default class LineupService {
             if (this.isPositionOpen(lineupPosition)) {
                 for (let key of Object.keys(this.playerSet)) {
                     let player = this.playerSet[key];
-                    if (this.positionMap[lineupPosition].includes(player.position)) {
+                    if (this.positionMap[player.position].includes(lineupPosition)) {
                         this.addPlayerToLineupByPosition(player, lineupPosition);
                     }
                 }

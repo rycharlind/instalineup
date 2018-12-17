@@ -21,12 +21,28 @@ export default class DataImportService {
         "salary"
     ];
 
+    public csvNflHeader = [
+        "rank",
+        "id",
+        "name",
+        "team",
+        "position",
+        "week",
+        "opponent",
+        "opponentRank",
+        "opponentPositionRank",
+        "projectedPoints",
+        "fantasyPointsPerDollar",
+        "operator",
+        "salary"
+    ];
+
     public db: firebase.database.Database;
 
     public async loadCsv(filePath: string) {
         this.initFirebase();
         await this.db.ref('/playerSet').remove();
-        csv.fromPath(filePath, {headers: this.csvHeader, renameHeaders: true, objectMode: true})
+        csv.fromPath(filePath, {headers: this.csvNflHeader, renameHeaders: true, objectMode: true})
             .on("data", async (player: Player) => {
                 await this.db.ref('/playerSet').push(this.convertDataTypes(player));
             })
@@ -53,8 +69,12 @@ export default class DataImportService {
         player.projectedPoints = parseFloat(player.projectedPoints);
         player.fantasyPointsPerDollar = parseFloat(player.fantasyPointsPerDollar);
         player.rank = parseInt(player.rank);
-        player.opponentPositionRank = parseInt(player.opponentPositionRank);
-        player.opponentRank = parseInt(player.opponentRank);
+        if (player.opponentRank != 'null') {
+            player.opponentRank = parseInt(player.opponentRank);
+        }
+        if (player.opponentPositionRank != 'null') {
+            player.opponentPositionRank = parseInt(player.opponentPositionRank);
+        }
         return player;
     }
 }
