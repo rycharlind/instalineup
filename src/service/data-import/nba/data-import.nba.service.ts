@@ -18,5 +18,6 @@ export default class DataImportNbaService extends DataImportService {
             "operator",
             "salary"
         ];
+        this.league = 'nba';
     }
 }
